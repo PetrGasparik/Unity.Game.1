@@ -9,6 +9,7 @@ public class PlayerManager : MonoBehaviour {
 
     private Animator anim;
     private Rigidbody2D rb;
+    private GameObject fire;
 
     bool facingRight, jumping, walking;
     float speed;
@@ -17,20 +18,23 @@ public class PlayerManager : MonoBehaviour {
     void Start() {
         anim = GetComponent<Animator>();
         rb = GetComponent<Rigidbody2D>();
+        fire = GameObject.Find("Fire");
+        //schováme výstřel
+        fire.GetComponent<Renderer>().enabled = false;
 
         facingRight = true;
     }
 
     // Update is called once per frame
     void Update() {
-        //move the player
-        MovePlayer(speed);
+        //flip if necessary
+        Flip();
 
         //jump and fall
         HandleJumpandFall();
 
-        //flip if necessary
-        Flip();
+        //move the player
+        MovePlayer(speed);
 
         //walk left
         if (Input.GetKeyDown(KeyCode.LeftArrow))
@@ -57,6 +61,13 @@ public class PlayerManager : MonoBehaviour {
         {
             Jump();
         }
+
+        //fire
+        if (Input.GetKeyDown(KeyCode.Space))
+        {
+            Fire();
+        }
+
     }
 
     void Flip()
@@ -68,11 +79,6 @@ public class PlayerManager : MonoBehaviour {
             Vector3 temp = transform.localScale;
             temp.x *= -1;
             transform.localScale = temp;
-        }
-
-        if (facingRight)
-        {
-
         }
     }
 
@@ -119,17 +125,22 @@ public class PlayerManager : MonoBehaviour {
         jumping = true;
         rb.AddForce(new Vector2(rb.velocity.x, jumpSpeedY));
     }
-
+    public void Fire()
+    {
+        fire.GetComponent<Renderer>().enabled = true;
+    }
     void HandleJumpandFall()
     {
         if(jumping)
         {
             if(rb.velocity.y>0)
             {
+                //jde nahoru
                 anim.SetInteger("State", 3);
             }
             else
             {
+                //jde dolu
                 anim.SetInteger("State", 4);
             }
         }
