@@ -1,15 +1,18 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class PlayerManager : MonoBehaviour {
 
     public float speedX;
     public float jumpSpeedY;
+    public GameObject firePrefab;
+    public Transform fireSpawn;
+    public int score = 0;
 
     private Animator anim;
     private Rigidbody2D rb;
-    private GameObject fire;
 
     bool facingRight, jumping, walking;
     float speed;
@@ -18,9 +21,6 @@ public class PlayerManager : MonoBehaviour {
     void Start() {
         anim = GetComponent<Animator>();
         rb = GetComponent<Rigidbody2D>();
-        fire = GameObject.Find("Fire");
-        //schováme výstřel
-        fire.GetComponent<Renderer>().enabled = false;
 
         facingRight = true;
     }
@@ -101,11 +101,12 @@ public class PlayerManager : MonoBehaviour {
 
     private void OnCollisionEnter2D(Collision2D collision)
     {
-        //        if (collision.gameObject.tag == "Ground")
-        //        {
-            jumping = false;
-            anim.SetInteger("State", 0);
-        //}
+        jumping = false;
+        anim.SetInteger("State", 4);
+        if (collision.gameObject.tag == "Spike")
+         {
+            anim.SetInteger("State", 5);
+         }
     }
 
     public void WalkLeft()
@@ -127,8 +128,31 @@ public class PlayerManager : MonoBehaviour {
     }
     public void Fire()
     {
-        fire.GetComponent<Renderer>().enabled = true;
+        // Create the Bullet from the Bullet Prefab
+        var bullet = (GameObject)Instantiate(
+            firePrefab,
+            fireSpawn.position,
+            fireSpawn.rotation);
+
+        //kam letí střela: 1 = doprava, -1 = doleva
+        int multiplier = facingRight ? 1 : -1;
+
+        //nasměruj střelu, je třeba přes pomocný vektor (viz tutoriál Unity)
+        Vector3 temp = bullet.transform.localScale;
+        temp.x = Mathf.Abs(temp.x);
+        temp.x *= multiplier;
+        bullet.transform.localScale = temp;
+
+        //dej střele energii
+        bullet.GetComponent<Rigidbody2D>().AddForce(new Vector2(bullet.GetComponent<FireManager>().speedX * multiplier, 0));
+
+        anim.SetInteger("State", 6);
+
+        // Destroy the bullet after 2 seconds
+        Destroy(bullet, 2.0f);
+
     }
+
     void HandleJumpandFall()
     {
         if(jumping)
@@ -143,6 +167,22 @@ public class PlayerManager : MonoBehaviour {
                 //jde dolu
                 anim.SetInteger("State", 4);
             }
+        }
+    }
+
+    //přidej score
+    public void AddScore()
+    {
+        score++;
+        CountScore();
+    }
+
+    //spočítej score a nahraj další level
+    void CountScore()
+    {
+        if(score==6)
+        {
+            SceneManager.LoadScene("2nd floor");
         }
     }
 }
